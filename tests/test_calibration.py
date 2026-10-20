@@ -90,3 +90,23 @@ def test_unbound_quote_cannot_be_booked():
     job_id, _ = quote_one(damage_severity=5)  # never binds
     with pytest.raises(ValueError):
         calibration.record_booking(job_id)
+
+
+def test_tuning_needs_enough_samples():
+    job_id, expected = quote_one()
+    calibration.record_invoice(job_id, expected * 1.05)
+    t = calibration.suggest_tuning()
+    assert t.samples_per_tier.get("none") == 1
+    assert t.suggested_spread_per_tier == {}  # 1 < MIN_SAMPLES
+
+
+def test_tuning_recommends_spread_covering_p90_overshoot():
+    # 12 clean jobs whose invoices overshoot predictions by 0..11%.
+    for i in range(12):
+        job_id, expected = quote_one(linear_feet=15 + i)
+        calibration.record_invoice(job_id, expected * (1 + i / 100))
+    t = calibration.suggest_tuning()
+    assert t.samples_per_tier["none"] == 12
+    s = t.suggested_spread_per_tier["none"]
+    # p90 overshoot ~0.10 + 0.03 buffer => ~0.13, floored at 0.05
+    assert 0.10 <= s <= 0.16

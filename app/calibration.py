@@ -130,6 +130,55 @@ def report() -> Report:
     )
 
 
+@dataclass(frozen=True)
+class Tuning:
+    """Recommended risk spreads, derived from realized cost overshoots.
+
+    The spread is the margin added to expected cost before we promise a
+    ceiling - a market maker's edge. We set it so the ceiling would have
+    covered ~90% of historical invoiced costs in that tier, plus a small
+    buffer. Recommendations only; a human updates SPREAD_BY_TIER."""
+
+    samples_per_tier: dict[str, int]
+    suggested_spread_per_tier: dict[str, float]  # e.g. {"none": 0.10}
+    current_spread_per_tier: dict[str, float]
+
+    MIN_SAMPLES = 10  # below this, keep the hand-set spreads
+
+
+def suggest_tuning() -> Tuning:
+    from .pricing import SPREAD_BY_TIER  # avoid import cycle at module load
+
+    with db.connect() as conn:
+        rows = conn.execute(
+            """SELECT j.risk_tier, j.expected_cost, i.invoiced_cost
+               FROM jobs j JOIN invoices i ON i.job_id = j.id
+               WHERE j.risk_tier != 'severe'"""
+        ).fetchall()
+
+    by_tier: dict[str, list[float]] = {}
+    for r in rows:
+        overshoot = r["invoiced_cost"] / r["expected_cost"] - 1  # +0.08 = 8% over
+        by_tier.setdefault(r["risk_tier"], []).append(overshoot)
+
+    suggested: dict[str, float] = {}
+    counts: dict[str, int] = {}
+    for tier, overshoots in by_tier.items():
+        counts[tier] = len(overshoots)
+        if len(overshoots) < Tuning.MIN_SAMPLES:
+            continue  # not enough data - no recommendation
+        overshoots.sort()
+        # 90th-percentile overshoot + 3 points of buffer, floored at 5%.
+        p90 = overshoots[min(len(overshoots) - 1, int(0.9 * len(overshoots)))]
+        suggested[tier] = round(max(0.05, p90 + 0.03), 2)
+
+    return Tuning(
+        samples_per_tier=counts,
+        suggested_spread_per_tier=suggested,
+        current_spread_per_tier=dict(SPREAD_BY_TIER),
+    )
+
+
 def list_jobs(limit: int = 50) -> list[dict]:
     """Newest quotes first, with any invoiced cost joined on."""
     with db.connect() as conn:

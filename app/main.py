@@ -277,5 +277,33 @@ def calibration_report() -> str:
         <li>Ceiling overruns: {r.overruns} (guarantee paid out ${r.overrun_paid_total:,.2f})</li>
       </ul>
       <p>{gate_line}</p>
+      {_tuning_section()}
       <p><a href="/jobs">Quotes</a> &middot; <a href="/">New quote</a></p>"""
     return PAGE.format(body=body)
+
+
+def _tuning_section() -> str:
+    t = calibration.suggest_tuning()
+    if not t.samples_per_tier:
+        return "<p class='muted'>Spread tuning: no invoiced jobs yet.</p>"
+    lines = []
+    for tier, current in t.current_spread_per_tier.items():
+        n = t.samples_per_tier.get(tier, 0)
+        if tier in t.suggested_spread_per_tier:
+            s = t.suggested_spread_per_tier[tier]
+            move = "tighten to" if s < current else "widen to"
+            lines.append(
+                f"<li>{tier}: current {current:.0%}, {n} samples - "
+                f"<b>{move} {s:.0%}</b> (covers ~90% of realized costs)</li>"
+            )
+        else:
+            lines.append(
+                f"<li>{tier}: current {current:.0%}, {n} samples - "
+                f"need {calibration.Tuning.MIN_SAMPLES}+ to recommend</li>"
+            )
+    return (
+        "<h3>Spread tuning (recommendations only)</h3><ul>"
+        + "".join(lines)
+        + "</ul><p class='muted'>Apply by editing SPREAD_BY_TIER in app/pricing.py "
+        "and bumping the rate card version.</p>"
+    )
