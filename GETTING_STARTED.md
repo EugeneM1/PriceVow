@@ -29,9 +29,20 @@ All green = the money logic still works. Run this after every change.
 | app/gate.py | Decides whether we're confident enough to guarantee a price | Rules in v0, Jev in Phase 2 |
 | app/pricing.py | Scope x rate card = price. Pure math | Never |
 | app/rate_cards.py | Contractor pricing rules. PLACEHOLDER numbers until Phase 0 calls | Never |
-| app/main.py | The web page: form in, quote out | No |
+| app/main.py | The web pages: quote form, /jobs admin, /calibration report | No |
+| app/judgment.py | The seam where Jev plugs in (PRICEVOW_JUDGE=jev at Phase 2) | Jev, later |
+| app/db.py + app/calibration.py | Every quote recorded; invoiced costs scored against predictions | Never |
 | data/golden_set_template.csv | The spreadsheet for your Phase 0 contractor calls | No |
-| tests/ | Proof the pricing and gate behave | No |
+| data/web_rates.csv | Sourced national cost-guide figures behind the rate cards | No |
+| docs/contractor_call_script.md | Word-for-word script for the Phase 0 calls | No |
+| tests/ | Proof the pricing, gate, and calibration behave | No |
+
+## The daily loop once quotes are real
+
+1. Issue quotes (or enter the manual ones you did by hand).
+2. When a job finishes, enter the invoiced cost at /jobs.
+3. Check /calibration - the page tells you when the Phase 0 gate
+   (median error <=15% on 5+ invoiced jobs) is passed.
 
 ## Turn on photo analysis (optional)
 

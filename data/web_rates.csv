@@ -1,0 +1,37 @@
+source,fetched,material_or_item,measure,low_usd,high_usd,unit,url,notes
+Fixr fence-repair,2026-10-20,all,repair rate,10,50,per linear ft,https://fixr.com/costs/fence-repair,general repair band
+Fixr fence-repair,2026-10-20,wood,repair job,400,600,per job,https://fixr.com/costs/fence-repair,typical job total
+Fixr fence-repair,2026-10-20,vinyl,repair job,200,700,per job,https://fixr.com/costs/fence-repair,
+Fixr fence-repair,2026-10-20,chain-link,repair job,300,600,per job,https://fixr.com/costs/fence-repair,
+Fixr fence-repair,2026-10-20,wrought-iron,repair job,300,1000,per job,https://fixr.com/costs/fence-repair,
+Fixr fence-repair,2026-10-20,gate,repair,150,500,per gate,https://fixr.com/costs/fence-repair,replacement 200-850
+Fixr fence-repair,2026-10-20,call-out,minimum fee,75,100,per visit,https://fixr.com/costs/fence-repair,often waived if hired
+Fixr wood-repair,2026-10-20,cedar,repair rate,9,16,per linear ft,https://www.fixr.com/costs/repair-wood-fence,western red cedar 10-17; NOTE: much lower than job-total implied rates - likely light picket/rail work only
+Fixr wood-repair,2026-10-20,wood,repair rate,5,20,per linear ft,https://www.fixr.com/costs/repair-wood-fence,by species band
+Fixr wood-repair,2026-10-20,wood post,replace,125,360,per post,https://www.fixr.com/costs/repair-wood-fence,
+Fixr wood-repair,2026-10-20,wood panel,replace,150,400,per panel,https://www.fixr.com/costs/repair-wood-fence,
+Fixr wood-repair,2026-10-20,wood gate,repair,300,1000,per gate,https://www.fixr.com/costs/repair-wood-fence,
+Fixr wood-repair,2026-10-20,leaning post,repair,60,2300,per job,https://www.fixr.com/costs/repair-wood-fence,braces 60-150; new concrete footing drives high end
+Fixr wood-repair,2026-10-20,rot/termites,repair job,1375,4075,per job,https://www.fixr.com/costs/repair-wood-fence,supports the never-bind-severe rule
+Fixr wood-repair,2026-10-20,labor,hourly,50,100,per hour,https://www.fixr.com/costs/repair-wood-fence,
+HomeGnome 2026,2026-10-20,all,repair rate,14,48,per linear ft,https://homegnome.com/blog/cost/fence-repair-price/,
+HomeGnome 2026,2026-10-20,wood,repair job,220,600,per job,https://homegnome.com/blog/cost/fence-repair-price/,
+HomeGnome 2026,2026-10-20,vinyl,repair job,225,750,per job,https://homegnome.com/blog/cost/fence-repair-price/,
+HomeGnome 2026,2026-10-20,chain-link,repair job,200,567,per job,https://homegnome.com/blog/cost/fence-repair-price/,
+HomeGnome 2026,2026-10-20,wrought-iron,repair job,300,1067,per job,https://homegnome.com/blog/cost/fence-repair-price/,
+HomeGnome 2026,2026-10-20,gate,repair or replace,125,513,per gate,https://homegnome.com/blog/cost/fence-repair-price/,
+HomeGnome 2026,2026-10-20,post,replace,160,450,per post,https://homegnome.com/blog/cost/fence-repair-price/,
+HomeAdvisor,2026-10-20,all,repair job,304,948,per job,https://www.homeadvisor.com/cost/fencing/repair-a-fence,national avg 618
+HomeAdvisor,2026-10-20,wood,repair rate,20,20,per linear ft,https://www.homeadvisor.com/cost/fencing/repair-a-fence,single avg figure
+HomeAdvisor,2026-10-20,chain-link,repair rate,20,20,per linear ft,https://www.homeadvisor.com/cost/fencing/repair-a-fence,single avg figure
+HomeAdvisor,2026-10-20,wrought-iron,repair rate,30,30,per linear ft,https://www.homeadvisor.com/cost/fencing/repair-a-fence,single avg figure
+HomeAdvisor,2026-10-20,gate,repair,100,400,per gate,https://www.homeadvisor.com/cost/fencing/repair-a-fence,
+HomeAdvisor,2026-10-20,post,replace,270,270,per post,https://www.homeadvisor.com/cost/fencing/repair-a-fence,avg
+HomeAdvisor,2026-10-20,labor,hourly,50,50,per hour,https://www.homeadvisor.com/cost/fencing/repair-a-fence,avg
+NerdWallet/Angi,2026-10-20,all,general repair,20,30,per sq ft,https://www.nerdwallet.com/article/mortgages/cost-to-install-a-fence,repairs quoted per SQUARE ft here
+NerdWallet/Angi,2026-10-20,leaning fence,repair,500,500,per job,https://www.nerdwallet.com/article/mortgages/cost-to-install-a-fence,avg
+NerdWallet/Angi,2026-10-20,hole/crack,repair,125,500,per job,https://www.nerdwallet.com/article/mortgages/cost-to-install-a-fence,
+NerdWallet/Angi,2026-10-20,wrought-iron,install rate,25,55,per linear ft,https://www.nerdwallet.com/article/mortgages/cost-to-install-a-fence,INSTALL not repair - upper bound sanity check
+NerdWallet/Angi,2026-10-20,vinyl panel,install rate,15,40,per linear ft,https://www.nerdwallet.com/article/mortgages/cost-to-install-a-fence,INSTALL not repair
+NerdWallet/Angi,2026-10-20,chain-link,install rate,8,40,per linear ft,https://www.nerdwallet.com/article/mortgages/cost-to-install-a-fence,INSTALL not repair
+NerdWallet/Angi,2026-10-20,labor,hourly,25,80,per hour,https://www.nerdwallet.com/article/mortgages/cost-to-install-a-fence,
