@@ -11,7 +11,7 @@ gate counts the missing photos as a visibility gap, so it won't bind).
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from . import calibration, judgment, pricing, scope
+from . import calibration, judgment, pricing, scope, video
 
 app = FastAPI(title="PriceVow")
 
@@ -50,8 +50,8 @@ FORM = """
     <input type="number" name="gate_count" min="0" max="10" step="1" value="0"></label>
   <label>ZIP code
     <input type="text" name="zip_code" pattern="[0-9]{5}" required></label>
-  <label>Photos or documents (optional in v0) - images, PDF reports, saved HTML pages
-    <input type="file" name="photos" accept="image/*,.pdf,.html,.htm" multiple></label>
+  <label>Photos, a short walkthrough video, or documents (images, video, PDF, HTML)
+    <input type="file" name="photos" accept="image/*,video/*,.pdf,.html,.htm" multiple></label>
   <button type="submit">Get my guaranteed price</button>
 </form>"""
 
@@ -79,12 +79,32 @@ async def quote(
         for p in photos
         if p.filename
     ]
+
+    # Videos become image frames before perception sees them.
+    frame_failures = 0
+    expanded: list[scope.Attachment] = []
+    for a in attachments:
+        if a.kind != "video":
+            expanded.append(a)
+            continue
+        frames = video.extract_frames(a.data)
+        if frames:
+            expanded.extend(
+                scope.Attachment(filename=f"{a.filename}.frame{i:02d}.jpg", data=f)
+                for i, f in enumerate(frames, 1)
+            )
+        else:
+            frame_failures += 1
+    attachments = expanded
+
     kinds = {a.kind for a in attachments}
     if "image" in kinds:
-        form_scope.visibility_gaps = []  # photos replace the "no photos" gap
+        form_scope.visibility_gaps = []  # photos/frames replace the "no photos" gap
     elif kinds & {"pdf", "html"}:
         # Documents help, but they aren't eyes on the fence itself.
         form_scope.visibility_gaps = ["documents only - no photos of the fence"]
+    if frame_failures:
+        form_scope.visibility_gaps.append("uploaded video could not be processed")
     vision_scope = scope.scope_from_attachments(attachments, form_scope)
     job_scope = scope.best_scope(form_scope, vision_scope)
 

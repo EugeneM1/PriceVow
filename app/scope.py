@@ -86,7 +86,7 @@ class Attachment:
 
     @property
     def kind(self) -> str:
-        """'image' | 'pdf' | 'html' | 'unsupported'."""
+        """'image' | 'pdf' | 'html' | 'video' | 'unsupported'."""
         name = self.filename.lower()
         ext = "." + name.rsplit(".", 1)[-1] if "." in name else ""
         if ext in IMAGE_TYPES:
@@ -95,6 +95,8 @@ class Attachment:
             return "pdf"
         if ext in (".html", ".htm"):
             return "html"
+        if ext in (".mp4", ".mov", ".webm", ".m4v"):
+            return "video"  # main.py samples these into image frames first
         return "unsupported"
 
 
