@@ -9,9 +9,9 @@ gate counts the missing photos as a visibility gap, so it won't bind).
 """
 
 from fastapi import FastAPI, File, Form, UploadFile
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
-from . import gate, pricing, scope
+from . import calibration, gate, pricing, scope
 
 app = FastAPI(title="PriceVow")
 
@@ -94,6 +94,9 @@ async def quote(
     # 3. Pricing: deterministic code over the rate card.
     result = pricing.price(job_scope)
 
+    # 4. Calibration: every quote goes on the record.
+    job_id = calibration.record_quote(job_scope, decision, result)
+
     if decision.binds:
         headline = f"""<div class="quote">
           <div>Your guaranteed maximum price</div>
@@ -109,9 +112,72 @@ async def quote(
 
     details = "".join(f"<li>{r}</li>" for r in decision.reasons)
     body = f"""{headline}
-      <p class="muted">Confidence {decision.bindable_prob:.0%} &middot;
+      <p class="muted">Quote {job_id} &middot; confidence {decision.bindable_prob:.0%} &middot;
       risk tier: {decision.risk_tier} &middot; scope source: {job_scope.source}
       &middot; rate card {result.rate_card_version}</p>
       <ul class="muted">{details}</ul>
-      <p><a href="/">&larr; New quote</a></p>"""
+      <p><a href="/">&larr; New quote</a> &middot; <a href="/jobs">All quotes</a></p>"""
+    return PAGE.format(body=body)
+
+
+# ---------------------------------------------------------------------------
+# Admin: the calibration loop's front door.
+# Record what each job ACTUALLY cost, then watch the accuracy report.
+# ---------------------------------------------------------------------------
+
+
+@app.get("/jobs", response_class=HTMLResponse)
+def jobs() -> str:
+    rows = []
+    for j in calibration.list_jobs():
+        promised = f"${j['ceiling']:,.0f}" if j["bound"] else "range only"
+        invoiced = (
+            f"${j['invoiced_cost']:,.0f}"
+            if j["invoiced_cost"] is not None
+            else f"""<form action="/jobs/{j['id']}/invoice" method="post" style="margin:0">
+                 <input name="invoiced_cost" type="number" step="1" min="1"
+                        placeholder="actual $" style="width:90px">
+                 <button>save</button></form>"""
+        )
+        rows.append(
+            f"<tr><td>{j['id']}</td><td>{j['created_at'][:10]}</td>"
+            f"<td>{j['zip_code']}</td><td>${j['expected_cost']:,.0f}</td>"
+            f"<td>{promised}</td><td>{invoiced}</td></tr>"
+        )
+    table = (
+        "<table border=1 cellpadding=6 cellspacing=0>"
+        "<tr><th>Quote</th><th>Date</th><th>ZIP</th><th>Expected</th>"
+        "<th>Promised</th><th>Invoiced (enter when job is done)</th></tr>"
+        + "".join(rows)
+        + "</table>"
+    ) if rows else "<p>No quotes yet - issue one from the <a href='/'>home page</a>.</p>"
+    body = f"""<h2>Quotes</h2>{table}
+      <p><a href="/calibration">Calibration report</a> &middot; <a href="/">New quote</a></p>"""
+    return PAGE.format(body=body)
+
+
+@app.post("/jobs/{job_id}/invoice")
+def save_invoice(job_id: str, invoiced_cost: float = Form(...)) -> RedirectResponse:
+    calibration.record_invoice(job_id, invoiced_cost)
+    return RedirectResponse(url="/jobs", status_code=303)
+
+
+@app.get("/calibration", response_class=HTMLResponse)
+def calibration_report() -> str:
+    r = calibration.report()
+    err = f"{r.median_abs_error_pct}%" if r.median_abs_error_pct is not None else "n/a"
+    gate_line = (
+        "<b style='color:green'>PASSES the Phase 0 gate (&le;15% on 5+ jobs)</b>"
+        if r.passes_phase0_gate
+        else "Does not pass the Phase 0 gate yet (&le;15% median error on 5+ invoiced jobs)"
+    )
+    body = f"""<h2>Calibration report</h2>
+      <ul>
+        <li>Quotes issued: {r.quotes_issued} (bound: {r.quotes_bound})</li>
+        <li>Jobs with invoiced cost: {r.jobs_invoiced}</li>
+        <li>Median absolute error: <b>{err}</b></li>
+        <li>Ceiling overruns: {r.overruns} (guarantee paid out ${r.overrun_paid_total:,.2f})</li>
+      </ul>
+      <p>{gate_line}</p>
+      <p><a href="/jobs">Quotes</a> &middot; <a href="/">New quote</a></p>"""
     return PAGE.format(body=body)

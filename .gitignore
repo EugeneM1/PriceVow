@@ -5,3 +5,5 @@ venv/
 .env
 .pytest_cache/
 .DS_Store
+data/pricevow.db
+*.db
