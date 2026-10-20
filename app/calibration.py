@@ -49,6 +49,19 @@ def record_quote(scope: Scope, decision: GateDecision, result: PriceResult) -> s
     return job_id
 
 
+def record_booking(job_id: str) -> None:
+    """The homeowner accepted a bound quote at its ceiling."""
+    with db.connect() as conn:
+        row = conn.execute(
+            "SELECT bound FROM jobs WHERE id = ?", (job_id,)
+        ).fetchone()
+        if not row:
+            raise ValueError(f"no job {job_id!r}")
+        if not row["bound"]:
+            raise ValueError("only bound quotes (with a ceiling) can be booked")
+        conn.execute("UPDATE jobs SET booked = 1 WHERE id = ?", (job_id,))
+
+
 def record_invoice(job_id: str, invoiced_cost: float) -> None:
     """A contractor reported what the job actually cost. This is the
     ground truth every prediction gets scored against."""

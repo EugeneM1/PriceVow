@@ -16,7 +16,9 @@ A calibration loop records predicted vs. invoiced cost on every completed job, c
 
 ## Status
 
-Design phase. Phase 0 (manual concierge validation) targets fence repair in Los Angeles: prove ≤15% median quote error against real contractor prices before writing production code.
+Phase 1 photo MVP is built and tested: quote form (photos, walkthrough video, PDF/HTML docs), guarantee gate, deterministic pricing over sourced LA rate cards, SQLite-backed calibration loop (/jobs, /calibration), booking flow, golden-set backtester, and the Jev judgment seam behind a feature flag. 29 tests passing. See GETTING_STARTED.md to run it.
+
+Next gate: Phase 0 contractor calls (docs/contractor_call_script.md) to replace web-derived rates with committed prices and prove ≤15% median error on the golden set.
 
 ## Roadmap
 

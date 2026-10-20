@@ -44,7 +44,8 @@ def connect() -> sqlite3.Connection:
             high REAL NOT NULL,
             ceiling REAL,                    -- NULL when we did not bind
             bound INTEGER NOT NULL,          -- 1 = we promised the ceiling
-            rate_card_version TEXT NOT NULL
+            rate_card_version TEXT NOT NULL,
+            booked INTEGER NOT NULL DEFAULT 0 -- homeowner accepted the ceiling
         );
         CREATE TABLE IF NOT EXISTS invoices (
             job_id TEXT PRIMARY KEY REFERENCES jobs(id),
@@ -53,6 +54,11 @@ def connect() -> sqlite3.Connection:
         );
         """
     )
+    # Lenient migration for databases created before the booked column.
+    try:
+        conn.execute("ALTER TABLE jobs ADD COLUMN booked INTEGER NOT NULL DEFAULT 0")
+    except sqlite3.OperationalError:
+        pass  # column already exists
     return conn
 
 

@@ -123,7 +123,9 @@ async def quote(
           <div>Your guaranteed maximum price</div>
           <div class="ceiling">${result.ceiling(decision.risk_tier):,.0f}</div>
           <div class="muted">Expected around ${result.expected_cost:,.0f}.
-          You will never pay above the ceiling. Valid 7 days.</div></div>"""
+          You will never pay above the ceiling. Valid 7 days.</div>
+          <form action="/jobs/{job_id}/book" method="post" style="margin-top:12px">
+            <button>Book at this price</button></form></div>"""
     else:
         headline = f"""<div class="quote">
           <div>Estimated range (not yet guaranteed)</div>
@@ -152,6 +154,8 @@ def jobs() -> str:
     rows = []
     for j in calibration.list_jobs():
         promised = f"${j['ceiling']:,.0f}" if j["bound"] else "range only"
+        if j["bound"] and j.get("booked"):
+            promised += " &middot; booked"
         invoiced = (
             f"${j['invoiced_cost']:,.0f}"
             if j["invoiced_cost"] is not None
@@ -175,6 +179,12 @@ def jobs() -> str:
     body = f"""<h2>Quotes</h2>{table}
       <p><a href="/calibration">Calibration report</a> &middot; <a href="/">New quote</a></p>"""
     return PAGE.format(body=body)
+
+
+@app.post("/jobs/{job_id}/book")
+def book(job_id: str) -> RedirectResponse:
+    calibration.record_booking(job_id)
+    return RedirectResponse(url="/jobs", status_code=303)
 
 
 @app.post("/jobs/{job_id}/invoice")

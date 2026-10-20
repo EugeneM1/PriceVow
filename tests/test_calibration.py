@@ -77,3 +77,16 @@ def test_phase0_gate_needs_five_accurate_jobs():
 def test_invoice_for_unknown_job_is_rejected():
     with pytest.raises(ValueError):
         calibration.record_invoice("PV-NOPE00", 500)
+
+
+def test_booking_a_bound_quote():
+    job_id, _ = quote_one()  # clean scope -> bound
+    calibration.record_booking(job_id)
+    job = next(j for j in calibration.list_jobs() if j["id"] == job_id)
+    assert job["booked"] == 1
+
+
+def test_unbound_quote_cannot_be_booked():
+    job_id, _ = quote_one(damage_severity=5)  # never binds
+    with pytest.raises(ValueError):
+        calibration.record_booking(job_id)
