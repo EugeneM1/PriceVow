@@ -11,7 +11,7 @@ gate counts the missing photos as a visibility gap, so it won't bind).
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from . import calibration, gate, pricing, scope
+from . import calibration, judgment, pricing, scope
 
 app = FastAPI(title="PriceVow")
 
@@ -89,7 +89,8 @@ async def quote(
     job_scope = scope.best_scope(form_scope, vision_scope)
 
     # 2. Judgment: can we afford to promise a ceiling?
-    decision = gate.assess(job_scope)
+    # (rules today; PRICEVOW_JUDGE=jev swaps in Jev at Phase 2)
+    decision = judgment.get_judge().assess(job_scope)
 
     # 3. Pricing: deterministic code over the rate card.
     result = pricing.price(job_scope)
