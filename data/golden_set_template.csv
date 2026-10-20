@@ -1,0 +1,6 @@
+job_id,description,material,linear_feet,damage_severity,gate_count,zip_code,contractor_1_price,contractor_2_price,contractor_3_price,median_price,notes
+G01,"Three leaning cedar panels, posts intact",cedar,18,3,0,90024,,,,,"reference job - ask every contractor this exact one"
+G02,"Wind-blown vinyl section, two panels snapped",vinyl,12,3,0,90025,,,,,
+G03,"Chain-link sagging along driveway",chain-link,30,2,0,90066,,,,,
+G04,"Cedar gate dragging, hinge post loose",cedar,4,4,1,90034,,,,,
+G05,"Full cedar run replacement after car impact",cedar,40,4,0,90064,,,,,
