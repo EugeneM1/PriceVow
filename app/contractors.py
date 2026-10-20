@@ -49,8 +49,10 @@ def list_contractors() -> list[dict]:
 
 
 def _matching_contractors(conn, zip_code: str) -> list[dict]:
+    # rowid = registration order: earliest-signed partners get first offer.
+    # (Ordering by the random hex id made "first" a coin flip - real bug.)
     rows = conn.execute(
-        "SELECT * FROM contractors WHERE active = 1 ORDER BY id"
+        "SELECT * FROM contractors WHERE active = 1 ORDER BY rowid"
     ).fetchall()
     return [dict(r) for r in rows if zip_code in r["zips"].split(",")]
 
