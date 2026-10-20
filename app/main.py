@@ -11,7 +11,7 @@ gate counts the missing photos as a visibility gap, so it won't bind).
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from . import calibration, judgment, pricing, scope, video
+from . import calibration, contractors, judgment, pricing, scope, video
 
 app = FastAPI(title="PriceVow")
 
@@ -182,15 +182,82 @@ def jobs() -> str:
 
 
 @app.post("/jobs/{job_id}/book")
-def book(job_id: str) -> RedirectResponse:
+def book(job_id: str) -> HTMLResponse:
     calibration.record_booking(job_id)
-    return RedirectResponse(url="/jobs", status_code=303)
+    try:
+        contractor_id = contractors.offer_job(job_id)
+        line = f"Booked. Job offered to contractor {contractor_id} - they have 24h to accept."
+    except LookupError:
+        line = ("Booked, but no registered contractor covers this ZIP yet - "
+                "add one at /contractors, then re-offer from the offers page.")
+    body = f"""<div class="quote"><b>{line}</b></div>
+      <p><a href="/jobs">All quotes</a> &middot; <a href="/contractors">Contractors</a></p>"""
+    return HTMLResponse(PAGE.format(body=body))
 
 
 @app.post("/jobs/{job_id}/invoice")
 def save_invoice(job_id: str, invoiced_cost: float = Form(...)) -> RedirectResponse:
     calibration.record_invoice(job_id, invoiced_cost)
     return RedirectResponse(url="/jobs", status_code=303)
+
+
+@app.get("/contractors", response_class=HTMLResponse)
+def contractors_page() -> str:
+    roster = "".join(
+        f"<tr><td>{c['id']}</td><td>{c['name']}</td><td>{c['email'] or ''}</td>"
+        f"<td>{c['zips']}</td><td>{'yes' if c['active'] else 'no'}</td></tr>"
+        for c in contractors.list_contractors()
+    )
+    roster_table = (
+        "<table border=1 cellpadding=6 cellspacing=0>"
+        "<tr><th>Id</th><th>Name</th><th>Email</th><th>ZIPs</th><th>Active</th></tr>"
+        + roster + "</table>"
+    ) if roster else "<p>No contractors yet - sign your Phase 0 partners up here.</p>"
+
+    offers = "".join(
+        f"""<tr><td>{o['job_id']}</td><td>{o['contractor_name']}</td>
+            <td>{o['zip_code']}</td><td>${o['ceiling']:,.0f}</td>
+            <td><form action="/offers/{o['id']}/decide" method="post" style="margin:0">
+              <button name="accept" value="1">accept</button>
+              <button name="accept" value="0">decline</button>
+              <input name="reason" placeholder="decline reason" style="width:140px">
+            </form></td></tr>"""
+        for o in contractors.pending_offers()
+    )
+    offers_table = (
+        "<h3>Pending offers</h3><table border=1 cellpadding=6 cellspacing=0>"
+        "<tr><th>Job</th><th>Contractor</th><th>ZIP</th><th>Ceiling</th><th>Decision</th></tr>"
+        + offers + "</table>"
+    ) if offers else "<h3>Pending offers</h3><p>None.</p>"
+
+    body = f"""<h2>Contractors</h2>{roster_table}
+      <h3>Add a contractor</h3>
+      <form action="/contractors" method="post">
+        <label>Name <input name="name" required></label>
+        <label>Email <input name="email" type="email"></label>
+        <label>ZIPs served (comma-separated) <input name="zips" required
+               placeholder="90024,90025,90064"></label>
+        <button>Add</button>
+      </form>
+      {offers_table}
+      <p><a href="/jobs">Quotes</a> &middot; <a href="/">New quote</a></p>"""
+    return PAGE.format(body=body)
+
+
+@app.post("/contractors")
+def add_contractor(
+    name: str = Form(...), email: str = Form(""), zips: str = Form(...)
+) -> RedirectResponse:
+    contractors.add_contractor(name, email, [z for z in zips.split(",") if z.strip()])
+    return RedirectResponse(url="/contractors", status_code=303)
+
+
+@app.post("/offers/{offer_id}/decide")
+def decide_offer(
+    offer_id: int, accept: str = Form(...), reason: str = Form("")
+) -> RedirectResponse:
+    contractors.decide_offer(offer_id, accept == "1", reason)
+    return RedirectResponse(url="/contractors", status_code=303)
 
 
 @app.get("/calibration", response_class=HTMLResponse)

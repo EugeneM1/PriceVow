@@ -52,6 +52,22 @@ def connect() -> sqlite3.Connection:
             invoiced_cost REAL NOT NULL,
             recorded_at TEXT NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS contractors (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            email TEXT,
+            zips TEXT NOT NULL,              -- comma-separated ZIPs served
+            active INTEGER NOT NULL DEFAULT 1
+        );
+        CREATE TABLE IF NOT EXISTS job_offers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_id TEXT NOT NULL REFERENCES jobs(id),
+            contractor_id TEXT NOT NULL REFERENCES contractors(id),
+            status TEXT NOT NULL DEFAULT 'pending',  -- pending|accepted|declined
+            reason TEXT,                             -- decline reasons tune rules
+            created_at TEXT NOT NULL,
+            decided_at TEXT
+        );
         """
     )
     # Lenient migration for databases created before the booked column.
