@@ -50,8 +50,8 @@ FORM = """
     <input type="number" name="gate_count" min="0" max="10" step="1" value="0"></label>
   <label>ZIP code
     <input type="text" name="zip_code" pattern="[0-9]{5}" required></label>
-  <label>Photos (optional in v0)
-    <input type="file" name="photos" accept="image/*" multiple></label>
+  <label>Photos or documents (optional in v0) - images, PDF reports, saved HTML pages
+    <input type="file" name="photos" accept="image/*,.pdf,.html,.htm" multiple></label>
   <button type="submit">Get my guaranteed price</button>
 </form>"""
 
@@ -74,10 +74,18 @@ async def quote(
     form_scope = scope.scope_from_form(
         linear_feet, material, damage_severity, gate_count, zip_code
     )
-    photo_bytes = [await p.read() for p in photos if p.filename]
-    if photo_bytes:
+    attachments = [
+        scope.Attachment(filename=p.filename, data=await p.read())
+        for p in photos
+        if p.filename
+    ]
+    kinds = {a.kind for a in attachments}
+    if "image" in kinds:
         form_scope.visibility_gaps = []  # photos replace the "no photos" gap
-    vision_scope = scope.scope_from_photos(photo_bytes, form_scope)
+    elif kinds & {"pdf", "html"}:
+        # Documents help, but they aren't eyes on the fence itself.
+        form_scope.visibility_gaps = ["documents only - no photos of the fence"]
+    vision_scope = scope.scope_from_attachments(attachments, form_scope)
     job_scope = scope.best_scope(form_scope, vision_scope)
 
     # 2. Judgment: can we afford to promise a ceiling?
